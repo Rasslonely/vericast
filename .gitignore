@@ -1,0 +1,37 @@
+# Node
+node_modules/
+.next/
+out/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Foundry
+out/
+cache/
+
+# Secrets (NEVER COMMIT)
+.env
+.env.local
+.env.production
+deployment.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+build/
+coverage/
+gas-report.txt

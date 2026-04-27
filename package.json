@@ -1,0 +1,24 @@
+{
+    "name": "vericast-omega",
+    "version": "1.0.0",
+    "description": "VERICAST OMEGA — Unified Verifiable State Layer on 0G",
+    "private": true,
+    "scripts": {
+        "compile": "hardhat compile",
+        "test": "hardhat test",
+        "test:forge": "forge test -vvv --gas-report",
+        "deploy": "hardhat run scripts/deploy-proxy.js --network 0g-mainnet",
+        "verify": "hardhat run scripts/verify.js --network 0g-mainnet",
+        "seed": "hardhat run scripts/seed-demo.js --network 0g-mainnet",
+        "probe": "bash scripts/probe-integrations.sh"
+    },
+    "devDependencies": {
+        "@nomicfoundation/hardhat-toolbox": "latest",
+        "@openzeppelin/hardhat-upgrades": "latest",
+        "@nomicfoundation/hardhat-verify": "latest",
+        "@openzeppelin/contracts-upgradeable": "^5.6.1",
+        "@openzeppelin/contracts": "^5.6.1",
+        "dotenv": "latest",
+        "hardhat": "latest"
+    }
+}
