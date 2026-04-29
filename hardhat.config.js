@@ -3,7 +3,8 @@ require("@openzeppelin/hardhat-upgrades");
 require("@nomicfoundation/hardhat-verify");
 require("dotenv").config();
 
-const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x" + "0".repeat(64);
+const ENV_KEY = process.env.PRIVATE_KEY;
+const PRIVATE_KEY = (ENV_KEY && ENV_KEY.length === 66 && ENV_KEY.startsWith("0x")) ? ENV_KEY : "0x" + "0".repeat(64);
 const BLOCKCHAIN_RPC = process.env.BLOCKCHAIN_RPC || "https://evmrpc.0g.ai";
 
 /** @type import('hardhat/config').HardhatUserConfig */
