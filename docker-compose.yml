@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      - BLOCKCHAIN_RPC=https://evmrpc.0g.ai
+      - INDEXER_RPC=https://indexer-storage-turbo.0g.ai
+    depends_on:
+      - kv-node
+    restart: unless-stopped
+
+  kv-node:
+    image: 0gfoundation/0g-storage-kv:latest
+    ports:
+      - "5678:5678"
+    volumes:
+      - ./kv-data:/data
+    environment:
+      - INDEXER_URL=https://indexer-storage-turbo.0g.ai
+      - BLOCKCHAIN_RPC=https://evmrpc.0g.ai
+    restart: unless-stopped
+    # NOTE: If no official Docker image exists, build from
+    # https://github.com/0gfoundation/0g-storage-kv
