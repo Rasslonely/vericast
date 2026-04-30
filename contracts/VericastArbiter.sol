@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IVericastArbiter.sol";
 
@@ -15,7 +15,7 @@ contract VericastArbiter is
     IVericastArbiter,
     UUPSUpgradeable,
     OwnableUpgradeable,
-    ReentrancyGuard
+    ReentrancyGuardTransient
 {
     /// @notice Dispute window: 150 blocks (~300s at ~2s/block on 0G Chain)
     uint32 public constant DISPUTE_WINDOW = 150;
