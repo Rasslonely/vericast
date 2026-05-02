@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@layer base {
+  body {
+    @apply bg-vericast-bg text-gray-200 font-sans antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-vericast-accent text-black font-semibold rounded-md
+           hover:bg-cyan-300 active:scale-95 transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-danger {
+    @apply px-4 py-2 bg-vericast-danger text-white font-semibold rounded-md
+           hover:bg-red-400 active:scale-95 transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply px-4 py-2 border border-vericast-border text-vericast-muted rounded-md
+           hover:border-vericast-accent hover:text-vericast-accent
+           active:scale-95 transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .panel-border {
+    @apply border border-vericast-border rounded-lg;
+  }
+  .card {
+    @apply bg-vericast-panel border border-vericast-border rounded-lg p-4;
+  }
+  .tab-active {
+    @apply bg-vericast-accent/10 border-b-2 border-vericast-accent text-vericast-accent;
+  }
+  .tab-inactive {
+    @apply border-b-2 border-transparent text-vericast-muted hover:text-gray-300 hover:border-vericast-border;
+  }
+}
+
+@layer utilities {
+  .glow-text {
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+  }
+  .glow-border {
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+  }
+}
