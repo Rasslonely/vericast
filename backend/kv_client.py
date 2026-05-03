@@ -56,8 +56,7 @@ class KVClient:
         If SDK fails to connect, client still works via REST/in-memory fallback.
         """
         try:
-            from zg_storage_sdk import Indexer
-            from zg_storage_sdk.core.kv import StorageKv
+            from zerog_storage_python import Indexer, StorageKv
 
             signer = Account.from_key(self.private_key)
             indexer = Indexer(self.indexer_rpc)

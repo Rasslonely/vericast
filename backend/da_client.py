@@ -45,7 +45,7 @@ class DAClient:
     async def connect(self) -> None:
         """Initialize signer and indexer connection."""
         try:
-            from zg_storage_sdk import Indexer
+            from zerog_storage_python import Indexer
 
             self._signer = Account.from_key(self.private_key)
             self._indexer = Indexer(self.indexer_rpc)
@@ -66,7 +66,7 @@ class DAClient:
         Fallback: switch to standard tier, retry 3 more.
         Raises: DAUploadError if all tiers exhausted.
         """
-        from zg_storage_sdk import ZgFile
+        from zerog_storage_python import ZgFile
 
         raw = json.dumps(data, sort_keys=True).encode("utf-8")
         file = ZgFile.from_bytes(raw)
@@ -89,7 +89,7 @@ class DAClient:
 
     async def _upload_with_retry(self, file, indexer_rpc: str, backoff: list[float]) -> str:
         """Upload with exponential retry."""
-        from zg_storage_sdk import Indexer
+        from zerog_storage_python import Indexer
 
         indexer = Indexer(indexer_rpc)
         last_error = None

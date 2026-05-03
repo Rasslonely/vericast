@@ -23,6 +23,16 @@ async function main() {
     const arbiter = await hre.ethers.getContractAt("VericastArbiter", deployment.contracts.VericastArbiter);
     const agentId = await hre.ethers.getContractAt("VericastAgentID", deployment.contracts.VericastAgentID);
 
+    // CRITICAL: Check for existence (Fix for BAD_DATA 0x error on ephemeral networks)
+    const code = await hre.ethers.provider.getCode(deployment.contracts.VericastAgentID);
+    if (code === "0x" || code === "0x0") {
+        console.error("❌ ERROR: No contract code found at address", deployment.contracts.VericastAgentID);
+        console.error("💡 This usually means you are using the ephemeral 'hardhat' network and the state was lost.");
+        console.error("💡 FIX: Use a persistent node (npx hardhat node) and run against --network localhost,");
+        console.error("💡 or run both deploy and seed in a single command chain: 'npx hardhat run scripts/deploy-proxy.js && npx hardhat run scripts/seed-demo.js'");
+        process.exit(1);
+    }
+
     // ============================================================
     // PART 1: Mint 10 Agent NFTs
     // ============================================================
