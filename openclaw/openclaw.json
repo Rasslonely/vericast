@@ -1,0 +1,37 @@
+{
+    "tools": [
+        {
+            "name": "query_state",
+            "parameters": {
+                "category": { "type": "string", "enum": ["game", "social", "depin"] },
+                "id": { "type": "string" }
+            },
+            "required": ["category", "id"],
+            "maps_to": "GET /{category}/state/{id}"
+        },
+        {
+            "name": "verify_attestation",
+            "parameters": {
+                "state_root": { "type": "string" },
+                "tee_seal": { "type": "string" }
+            },
+            "required": ["state_root", "tee_seal"],
+            "maps_to": "TEE seal verification"
+        },
+        {
+            "name": "audit_agents",
+            "parameters": {
+                "feed_id": { "type": "string" }
+            },
+            "required": ["feed_id"],
+            "maps_to": "POST /social/audit"
+        }
+    ],
+    "hooks": {
+        "agent_end": "./hooks/agent_end.js"
+    },
+    "config": {
+        "api_endpoint": "http://localhost:8000",
+        "explorer_url": "https://chainscan.0g.ai"
+    }
+}
