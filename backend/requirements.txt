@@ -3,9 +3,7 @@ uvicorn[standard]
 aiohttp>=3.9.0
 eth-account>=0.11.0
 python-dotenv>=1.0.0
-0g-storage-sdk==0.3.0
-# === ADDED per 3_debug/missing_integration.md ===
-0g-py-sdk                  # 0G Compute inference SDK (broker auth) [Gap #7]
-pycryptodome>=3.23.0       # Required by 0g-storage-sdk (merkle tree) [Gap #8]
-web3>=7.14.0               # Required by 0g-storage-sdk (blockchain RPC) [Gap #8]
-requests>=2.32.5           # Required by 0g-storage-sdk (HTTP client) [Gap #8]
+pycryptodome>=3.23.0
+web3>=7.14.0
+requests>=2.32.5
+

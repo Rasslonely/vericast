@@ -34,8 +34,7 @@ class KVClient:
 
     async def connect(self) -> None:
         try:
-            from zerog_storage_python import Indexer
-            from zerog_storage_python import StorageKv
+            from zg_storage_sdk import Indexer, StorageKv
             from eth_account import Account
 
             signer = Account.from_key(self.private_key)

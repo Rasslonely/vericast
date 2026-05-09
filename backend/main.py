@@ -56,6 +56,18 @@ app = FastAPI(title="VERICAST OMEGA API", version="1.1.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 
+@app.get("/")
+async def root():
+    return {"message": "VERICAST OMEGA API is running"}
+
+
+@app.get("/favicon.ico")
+async def favicon():
+    from fastapi.responses import Response
+    return Response(status_code=204)
+
+
+
 class TickSubmission(BaseModel):
     match_id: str
     tick: int
