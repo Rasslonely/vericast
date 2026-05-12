@@ -21,7 +21,7 @@ DEMO_AGENTS = {
 }
 
 
-async def audit_feed(feed_id: str, tee_client, kv_client) -> dict:
+async def audit_feed(feed_id: str, tee_client, kv_client, chain_client) -> dict:
     """Run sybil audit on a social feed.
 
     Pipeline:
@@ -82,9 +82,28 @@ async def audit_feed(feed_id: str, tee_client, kv_client) -> dict:
     }
     await kv_client.put(audit_key, audit_state)
 
+    # Step 5: On-chain settlement
+    import hashlib
+    # Compute a dummy state root for social audit (e.g. hash of summary)
+    state_root = "0x" + hashlib.sha256(summary.encode("utf-8")).hexdigest()
+    
+    chain_result = await chain_client.submit_state_root(
+        stream_id="vericast_state_v1",
+        key=audit_key,
+        state_root=state_root,
+        tee_seal=tee_seal or "",
+        proof_hash=state_root,
+    )
+
+    import os
+    explorer_base = os.environ.get("EXPLORER_BASE_URL", "https://chainscan.0g.ai")
+    explorer_link = chain_result.get("explorer_link") or f"{explorer_base}/tx/{state_root}"
+
     return {
         "feed_id": feed_id,
         "flagged_agents": flagged,
         "tee_seal": tee_seal,
         "summary": summary,
+        "explorer_link": explorer_link,
+        "tx_hash": chain_result.get("tx_hash"),
     }

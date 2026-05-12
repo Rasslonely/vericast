@@ -12,7 +12,7 @@ import os
 logger = logging.getLogger("vericast.game")
 
 
-async def process_tick(tick_data: dict, da_client, tee_client, kv_client) -> dict:
+async def process_tick(tick_data: dict, da_client, tee_client, kv_client, chain_client) -> dict:
     """Process a game tick submission.
 
     Pipeline:
@@ -74,8 +74,17 @@ async def process_tick(tick_data: dict, da_client, tee_client, kv_client) -> dic
     }
     await kv_client.put(key, state)
 
-    # Step 5: Response [EXPLORER LINK MANDATE]
-    explorer_link = f"{explorer_base}/tx/{da_root}" if da_root and not da_root.startswith("inmemory_") else None
+    # Step 5: On-chain settlement
+    chain_result = await chain_client.submit_state_root(
+        stream_id="vericast_state_v1",
+        key=key,
+        state_root=state_root,  # Use computed state root
+        tee_seal=tee_seal or "",
+        proof_hash=da_root,
+    )
+
+    # Use real tx hash for explorer link
+    explorer_link = chain_result.get("explorer_link") or (f"{explorer_base}/tx/{da_root}" if da_root and not da_root.startswith("inmemory_") else None)
 
     if tee_seal == "mock_seal":
         return {
@@ -85,6 +94,7 @@ async def process_tick(tick_data: dict, da_client, tee_client, kv_client) -> dic
             "state_root": state_root,
             "tee_seal": None,
             "explorer_link": explorer_link,
+            "tx_hash": chain_result.get("tx_hash"),
             "message": "TEE speed check skipped; mock seal applied",
         }
 
@@ -93,4 +103,5 @@ async def process_tick(tick_data: dict, da_client, tee_client, kv_client) -> dic
         "state_root": state_root,
         "tee_seal": tee_seal,
         "explorer_link": explorer_link,
+        "tx_hash": chain_result.get("tx_hash"),
     }

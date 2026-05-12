@@ -17,6 +17,7 @@ from da_client import DAClient
 from kv_client import KVClient
 from tee_broker import TEEBroker
 from tee_client import TEEClient
+from chain_client import ChainClient
 from streams.depin import process_weather
 from streams.game import process_tick
 from streams.social import audit_feed
@@ -30,6 +31,7 @@ da_client = DAClient()
 kv_client = KVClient()
 tee_broker = TEEBroker()
 tee_client = TEEClient(broker=tee_broker)
+chain_client = ChainClient()
 
 
 @asynccontextmanager
@@ -39,10 +41,12 @@ async def lifespan(app: FastAPI):
     await kv_client.connect()
     await tee_broker.initialize()
     await tee_client.connect()
+    await chain_client.connect()
 
     logger.info(f"  DA:  {'✅' if da_client.is_connected else '❌'}")
     logger.info(f"  KV:  {'✅' if kv_client.is_connected else '❌'} (tier: {kv_client.active_tier})")
     logger.info(f"  TEE: {'✅' if tee_client.is_connected else '❌'} (broker: {tee_broker.is_initialized})")
+    logger.info(f"  Chain: {'✅' if chain_client.is_connected else '❌'}")
     logger.info("=== Probe Complete ===")
 
     yield
@@ -50,6 +54,7 @@ async def lifespan(app: FastAPI):
     await da_client.disconnect()
     await kv_client.disconnect()
     await tee_client.disconnect()
+    await chain_client.disconnect()
 
 
 app = FastAPI(title="VERICAST OMEGA API", version="1.1.0", lifespan=lifespan)
@@ -85,18 +90,20 @@ async def health():
     kv_ok = kv_client.is_connected
     tee_ok = tee_client.is_connected
     da_ok = da_client.is_connected
+    chain_ok = chain_client.is_connected
     return {
-        "status": "healthy" if (kv_ok and tee_ok and da_ok) else "degraded",
+        "status": "healthy" if (kv_ok and tee_ok and da_ok and chain_ok) else "degraded",
         "0g_kv": kv_ok, "0g_kv_tier": kv_client.active_tier,
         "0g_tee": tee_ok, "0g_tee_broker": tee_broker.is_initialized,
         "0g_da": da_ok,
-        "integrations_verified": kv_ok and tee_ok and da_ok,
+        "0g_chain": chain_ok,
+        "integrations_verified": kv_ok and tee_ok and da_ok and chain_ok,
     }
 
 
 @app.get("/depin/weather/{lat}/{lon}")
 async def depin_weather(lat: float, lon: float):
-    result = await process_weather(lat, lon, da_client, tee_client, kv_client)
+    result = await process_weather(lat, lon, da_client, tee_client, kv_client, chain_client)
     if "error" in result:
         code = {"rate_limit": 429, "upstream_timeout": 504}.get(result["error"], 200)
         if code != 200:
@@ -106,7 +113,7 @@ async def depin_weather(lat: float, lon: float):
 
 @app.post("/game/submit-tick")
 async def game_submit_tick(tick: TickSubmission):
-    result = await process_tick(tick.model_dump(), da_client, tee_client, kv_client)
+    result = await process_tick(tick.model_dump(), da_client, tee_client, kv_client, chain_client)
     if "error" in result and result["error"] == "upstream_timeout":
         raise HTTPException(status_code=504, detail=result)
     return result
@@ -114,7 +121,7 @@ async def game_submit_tick(tick: TickSubmission):
 
 @app.post("/social/audit")
 async def social_audit(req: AuditRequest):
-    return await audit_feed(req.feed_id, tee_client, kv_client)
+    return await audit_feed(req.feed_id, tee_client, kv_client, chain_client)
 
 
 if __name__ == "__main__":
