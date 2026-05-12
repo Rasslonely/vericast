@@ -1,7 +1,16 @@
 'use client'
 
-import { useState } from 'react'
-import type { PanelProps, SocialAuditResponse, APIError } from '@/types/api'
+import { useState, useEffect } from 'react'
+import type { SocialAuditResponse, APIError } from '@/types/api'
+import { ethers } from 'ethers'
+import { useContracts } from '@/hooks/useContracts'
+
+interface SocialPanelProps {
+  api: string
+  explorer: string
+  onActivity?: () => void
+  signer: ethers.Signer | null
+}
 
 interface Agent {
   id: string
@@ -30,8 +39,36 @@ const TYPE_BADGES: Record<number, { label: string; color: string }> = {
   2: { label: 'IoT', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
 }
 
-export default function SocialPanel({ api, explorer, onActivity }: PanelProps) {
+export default function SocialPanel({ api, explorer, onActivity, signer }: SocialPanelProps) {
+  const { agentId } = useContracts(signer)
   const [agents, setAgents] = useState<Agent[]>(INITIAL_AGENTS)
+
+  useEffect(() => {
+    const loadAgents = async () => {
+      if (!agentId) return
+      try {
+        const total = await agentId.totalSupply()
+        const loaded: Agent[] = []
+        for (let i = 1; i <= Number(total); i++) {
+          const owner = await agentId.ownerOf(i)
+          const data = await agentId.agents(i)
+          loaded.push({
+            id: `agent_${i}`,
+            name: `Agent #${i} (${owner.slice(0,6)}...)`,
+            type: Number(data[5]),
+            typeLabel: data[5] === 0 ? 'Human' : data[5] === 1 ? 'AI' : 'IoT',
+            suspicious: false,
+          })
+        }
+        if (loaded.length > 0) {
+          setAgents(loaded)
+        }
+      } catch (e) {
+        console.error('Failed to load agents from contract:', e)
+      }
+    }
+    loadAgents()
+  }, [agentId])
   const [feedId] = useState('main_feed')
   const [auditing, setAuditing] = useState(false)
   const [result, setResult] = useState<SocialAuditResponse | null>(null)

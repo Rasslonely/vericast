@@ -1,7 +1,16 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import type { PanelProps, PlayerState, GameTickResponse, APIError } from '@/types/api'
+import type { PlayerState, GameTickResponse, APIError } from '@/types/api'
+import { ethers } from 'ethers'
+import { useContracts } from '@/hooks/useContracts'
+
+interface GamePanelProps {
+  api: string
+  explorer: string
+  onActivity?: () => void
+  signer: ethers.Signer | null
+}
 
 const CANVAS_W = 800
 const CANVAS_H = 400
@@ -17,8 +26,9 @@ interface Player {
   health: number
 }
 
-export default function GamePanel({ api, explorer, onActivity }: PanelProps) {
+export default function GamePanel({ api, explorer, onActivity, signer }: GamePanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const { arbiter } = useContracts(signer)
   const [players, setPlayers] = useState<Player[]>([
     { id: 'p1', x: 200, y: 200, color: COLORS[0], health: 100 },
     { id: 'p2', x: 400, y: 200, color: COLORS[1], health: 100 },
@@ -182,9 +192,33 @@ export default function GamePanel({ api, explorer, onActivity }: PanelProps) {
         const err = data as APIError
         setError(err.message || `HTTP ${resp.status}`)
       } else {
-        setResult(data as GameTickResponse)
+        const gameResp = data as GameTickResponse
+        setResult(gameResp)
         setTick(newTick)
         onActivity?.()
+
+        // Submit on-chain via MetaMask
+        if (arbiter && signer) {
+          try {
+            const streamId = ethers.keccak256(ethers.toUtf8Bytes('vericast_state_v1'))
+            const key = ethers.keccak256(ethers.toUtf8Bytes(`match_${matchId}_tick_${newTick}`))
+            const root = gameResp.state_root
+            const seal = gameResp.tee_seal || ethers.ZeroHash
+            const proof = gameResp.da_root || ethers.ZeroHash
+
+            const tx = await arbiter.submitStateRoot(streamId, key, root, seal, proof)
+            const receipt = await tx.wait()
+            
+            // Update result with real tx hash
+            setResult({
+              ...gameResp,
+              explorer_link: `https://chainscan-galileo.0g.ai/tx/${receipt.hash}`,
+            })
+          } catch (txError: any) {
+            console.error('On-chain submission failed:', txError)
+            setError(`On-chain settlement failed: ${txError.message || txError}`)
+          }
+        }
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Network error')

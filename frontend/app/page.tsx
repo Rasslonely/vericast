@@ -6,6 +6,7 @@ import GamePanel from '@/components/GamePanel'
 import SocialPanel from '@/components/SocialPanel'
 import DePINPanel from '@/components/DePINPanel'
 import VericastBadge from '@/components/VericastBadge'
+import { useWallet } from '@/hooks/useWallet'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 const EXPLORER_URL = process.env.NEXT_PUBLIC_EXPLORER_URL || 'https://chainscan.0g.ai'
@@ -19,6 +20,7 @@ const TABS: { id: TabId; label: string; desc: string }[] = [
 ]
 
 export default function Dashboard() {
+  const { address, balance, isConnecting, connect, signer } = useWallet()
   const [activeTab, setActiveTab] = useState<TabId>('game')
   const [health, setHealth] = useState<HealthResponse | null>(null)
   const [teeCount, setTeeCount] = useState(0)
@@ -62,6 +64,13 @@ export default function Dashboard() {
             </span>
           </div>
           <div className="flex items-center gap-3">
+            <button 
+              onClick={connect} 
+              disabled={isConnecting}
+              className="text-xs font-mono border border-vericast-border rounded px-3 py-1 hover:bg-vericast-border/50 transition-colors"
+            >
+              {isConnecting ? 'Connecting...' : address ? `${address.slice(0,6)}...${address.slice(-4)} (${parseFloat(balance).toFixed(2)} OG)` : 'Connect Wallet'}
+            </button>
             <span className={`w-2 h-2 rounded-full ${health?.status === 'healthy' ? 'bg-vericast-success shadow-[0_0_6px_rgba(0,255,136,0.6)]' : health ? 'bg-vericast-warning shadow-[0_0_6px_rgba(255,170,0,0.6)]' : 'bg-vericast-muted'}`} />
             <span className="text-xs text-vericast-muted font-mono">
               {health ? health.status.toUpperCase() : 'CONNECTING'}
@@ -96,7 +105,7 @@ export default function Dashboard() {
               <h2 className="text-sm font-semibold text-vericast-muted uppercase tracking-wider mb-3">
                 Gaming — Verified Tick Pipeline
               </h2>
-              <GamePanel api={API_BASE} explorer={EXPLORER_URL} onActivity={onActivity} />
+              <GamePanel api={API_BASE} explorer={EXPLORER_URL} onActivity={onActivity} signer={signer} />
             </section>
           )}
 
@@ -105,7 +114,7 @@ export default function Dashboard() {
               <h2 className="text-sm font-semibold text-vericast-muted uppercase tracking-wider mb-3">
                 SocialFi — Sybil Detection
               </h2>
-              <SocialPanel api={API_BASE} explorer={EXPLORER_URL} onActivity={onActivity} />
+              <SocialPanel api={API_BASE} explorer={EXPLORER_URL} onActivity={onActivity} signer={signer} />
             </section>
           )}
 

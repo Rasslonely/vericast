@@ -74,14 +74,8 @@ async def process_tick(tick_data: dict, da_client, tee_client, kv_client, chain_
     }
     await kv_client.put(key, state)
 
-    # Step 5: On-chain settlement
-    chain_result = await chain_client.submit_state_root(
-        stream_id="vericast_state_v1",
-        key=key,
-        state_root=state_root,  # Use computed state root
-        tee_seal=tee_seal or "",
-        proof_hash=da_root,
-    )
+    # Step 5: On-chain settlement (Handled by frontend via MetaMask in Phase 6F)
+    chain_result = {}
 
     # Use real tx hash for explorer link
     explorer_link = chain_result.get("explorer_link") or (f"{explorer_base}/tx/{da_root}" if da_root and not da_root.startswith("inmemory_") else None)

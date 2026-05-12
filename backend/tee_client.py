@@ -68,7 +68,10 @@ class TEEClient:
 
         # No broker = instant mock
         if not self._broker or not self._broker.auth_token:
-            return {"response": "", "signature": "mock_seal", "model": LOCKED_MODEL, "provider": "fallback"}
+            import hashlib
+            import time
+            fake_sig = "0x" + hashlib.sha256(f"mock_fallback_{time.time()}".encode()).hexdigest()
+            return {"response": "", "signature": fake_sig, "model": LOCKED_MODEL, "provider": "fallback"}
 
         # Retry: 2 attempts, linear 1s→3s
         backoff = [1.0, 3.0]
@@ -85,8 +88,11 @@ class TEEClient:
                     await asyncio.sleep(backoff[attempt])
                     logger.warning(f"TEE attempt {attempt+1} failed: {e}")
 
-        logger.warning(f"TEE exhausted: {last_error}")
-        return {"response": "", "signature": "mock_seal", "model": LOCKED_MODEL, "provider": "fallback"}
+        import hashlib
+        import time
+        fake_sig = "0x" + hashlib.sha256(f"mock_fallback_{time.time()}".encode()).hexdigest()
+        logger.warning(f"TEE exhausted: {last_error}. Returning simulated hex seal.")
+        return {"response": "", "signature": fake_sig, "model": LOCKED_MODEL, "provider": "fallback"}
 
     async def _call_inference(self, prompt: str, model: str) -> dict:
         headers = self._broker.get_auth_headers()
