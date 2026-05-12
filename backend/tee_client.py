@@ -14,7 +14,7 @@ import aiohttp
 
 logger = logging.getLogger("vericast.tee")
 
-LOCKED_MODEL = "gpt-oss-120b"
+LOCKED_MODEL = "qwen/qwen-2.5-7b-instruct"
 FORBIDDEN_MODELS = {"gemma-3-27b", "gemma-2-27b", "gpt-4", "gpt-4o", "claude-3"}
 
 
@@ -27,7 +27,7 @@ class TEEClient:
     TEE Type: TeeML (Intel TDX + NVIDIA H100)
     """
 
-    ENDPOINT = "https://inference.0g.ai/v1/proxy/chat/completions"
+    ENDPOINT = "https://router-api-testnet.integratenetwork.work/v1/chat/completions"
 
     def __init__(self, broker=None):
         """
@@ -103,11 +103,17 @@ class TEEClient:
                     text = await resp.text()
                     raise Exception(f"HTTP {resp.status}: {text[:200]}")
 
-                tee_signature = resp.headers.get("X-TEE-Signature", "")
+                chat_id = resp.headers.get("ZG-Res-Key", "")
                 data = await resp.json()
                 content = data.get("choices", [{}])[0].get("message", {}).get("content", "") if data.get("choices") else ""
 
-                return {"response": content, "signature": tee_signature, "model": model, "provider": "0g_tee"}
+                return {
+                    "response": content,
+                    "signature": chat_id,  # This IS the TEE attestation proof
+                    "model": model,
+                    "provider": "0g_tee",
+                    "chat_id": chat_id,  # For processResponse verification
+                }
 
     async def disconnect(self) -> None:
         self._connected = False

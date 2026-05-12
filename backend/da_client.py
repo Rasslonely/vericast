@@ -74,7 +74,7 @@ class DAClient:
 
         # Tier 1: Turbo indexer
         try:
-            return await self._upload_with_retry(file, self.indexer_rpc, backoff=[1.0, 2.0, 4.0])
+            return await self._upload_with_retry(file, self.indexer_rpc, backoff=[2.0, 5.0, 10.0])
         except Exception as e:
             logger.warning(f"DA turbo tier exhausted: {e}")
 
@@ -82,13 +82,11 @@ class DAClient:
         if self.indexer_rpc != self.STANDARD_RPC:
             try:
                 logger.info("Falling back to standard DA tier")
-                return await self._upload_with_retry(file, self.STANDARD_RPC, backoff=[1.0, 2.0, 4.0])
+                return await self._upload_with_retry(file, self.STANDARD_RPC, backoff=[2.0, 5.0, 10.0])
             except Exception as e:
                 logger.error(f"DA standard tier also failed: {e}")
 
-        logger.warning("DA upload failed on all tiers — falling back to mock root")
-        import hashlib
-        return "0x" + hashlib.sha256(raw).hexdigest()
+        raise DAUploadError("DA upload failed on all tiers after 6 total attempts")
 
 
     async def _upload_with_retry(self, file, indexer_rpc: str, backoff: list[float]) -> str:

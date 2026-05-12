@@ -35,6 +35,7 @@ module.exports = {
     etherscan: {
         apiKey: {
             "0g-mainnet": "placeholder",
+            "0g-testnet": "placeholder",
         },
         customChains: [
             {
@@ -43,6 +44,14 @@ module.exports = {
                 urls: {
                     apiURL: "https://chainscan.0g.ai/open/api",
                     browserURL: "https://chainscan.0g.ai",
+                },
+            },
+            {
+                network: "0g-testnet",
+                chainId: 16602,
+                urls: {
+                    apiURL: "https://chainscan-galileo.0g.ai/open/api",
+                    browserURL: "https://chainscan-galileo.0g.ai",
                 },
             },
         ],
