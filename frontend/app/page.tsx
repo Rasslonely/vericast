@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Activity, Radio, Cpu, Network, Database, ShieldCheck, ChevronRight } from 'lucide-react'
 import type { HealthResponse } from '@/types/api'
 import GamePanel from '@/components/GamePanel'
 import SocialPanel from '@/components/SocialPanel'
@@ -13,10 +15,10 @@ const EXPLORER_URL = process.env.NEXT_PUBLIC_EXPLORER_URL || 'https://chainscan.
 
 type TabId = 'game' | 'social' | 'depin'
 
-const TABS: { id: TabId; label: string; desc: string }[] = [
-  { id: 'game', label: 'Gaming', desc: 'Real-time state verification' },
-  { id: 'social', label: 'SocialFi', desc: 'TEE sybil audit' },
-  { id: 'depin', label: 'DePIN', desc: 'Weather sensor pipeline' },
+const TABS: { id: TabId; label: string; desc: string; icon: any }[] = [
+  { id: 'game', label: 'Gaming', desc: 'State verification', icon: Cpu },
+  { id: 'social', label: 'SocialFi', desc: 'Sybil audit', icon: Network },
+  { id: 'depin', label: 'DePIN', desc: 'Sensor pipeline', icon: Radio },
 ]
 
 export default function Dashboard() {
@@ -47,136 +49,172 @@ export default function Dashboard() {
 
   const onActivity = useCallback(() => {
     setActivityFlash(true)
-    setTimeout(() => setActivityFlash(false), 300)
+    setTimeout(() => setActivityFlash(false), 500)
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b border-vericast-border bg-vericast-panel/50 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold tracking-tight">
-              <span className="text-vericast-accent glow-text">VERICAST</span>
-              <span className="text-gray-400 ml-1">OMEGA</span>
+    <div className="min-h-screen flex flex-col relative z-0 selection:bg-vericast-accent/30">
+      <header className="border-b border-vericast-border bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50 shadow-glass">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-bold tracking-tight">
+              <span className="text-vericast-accent glow-text drop-shadow-[0_0_10px_rgba(34,211,238,0.8)]">VERICAST</span>
+              <span className="text-slate-300 ml-1.5 font-light tracking-widest drop-shadow-md">OMEGA</span>
             </h1>
-            <span className="hidden sm:inline text-xs text-vericast-muted font-mono border border-vericast-border rounded px-2 py-0.5">
-              Chain 16661
-            </span>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-[#0f172a] border border-white/10 rounded-full shadow-inner">
+              <span className="w-1.5 h-1.5 rounded-full bg-vericast-accent shadow-neon-cyan animate-pulse" />
+              <span className="text-xs text-cyan-500 font-mono font-bold tracking-widest">Chain 16602</span>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-2 mr-2">
+              <span className={`w-2 h-2 rounded-full transition-all duration-500 ${health?.status === 'healthy' ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]' : health ? 'bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.8)]' : 'bg-slate-500'}`} />
+              <span className={`text-xs font-mono font-bold tracking-widest ${health?.status === 'healthy' ? 'text-emerald-400' : health ? 'text-orange-400' : 'text-slate-400'}`}>
+                {health ? health.status.toUpperCase() : 'PROBING'}
+              </span>
+            </div>
             <button 
               onClick={connect} 
               disabled={isConnecting}
-              className="text-xs font-mono border border-vericast-border rounded px-3 py-1 hover:bg-vericast-border/50 transition-colors"
+              className="relative overflow-hidden text-xs font-mono font-bold tracking-widest text-white px-6 py-2.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 hover:bg-cyan-900/60 hover:border-cyan-400 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)] active:scale-95 transition-all duration-300 group"
             >
-              {isConnecting ? 'Connecting...' : address ? `${address.slice(0,6)}...${address.slice(-4)} (${parseFloat(balance).toFixed(2)} OG)` : 'Connect Wallet'}
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/20 to-cyan-500/0 opacity-0 group-hover:opacity-100 transform -translate-x-full group-hover:translate-x-full transition-all duration-1000 ease-in-out" />
+              <span className="relative z-10 flex items-center gap-2 drop-shadow-md">
+                {isConnecting ? (
+                  <><Activity size={16} className="animate-spin text-cyan-400" /> CONNECTING...</>
+                ) : address ? (
+                  <>{address.slice(0,6)}...{address.slice(-4)} <span className="text-cyan-500 opacity-70 px-1">|</span> {parseFloat(balance).toFixed(2)} A0GI</>
+                ) : (
+                  <>CONNECT WALLET</>
+                )}
+              </span>
             </button>
-            <span className={`w-2 h-2 rounded-full ${health?.status === 'healthy' ? 'bg-vericast-success shadow-[0_0_6px_rgba(0,255,136,0.6)]' : health ? 'bg-vericast-warning shadow-[0_0_6px_rgba(255,170,0,0.6)]' : 'bg-vericast-muted'}`} />
-            <span className="text-xs text-vericast-muted font-mono">
-              {health ? health.status.toUpperCase() : 'CONNECTING'}
-            </span>
           </div>
         </div>
       </header>
 
-      <nav className="border-b border-vericast-border bg-vericast-bg/80 backdrop-blur sticky top-[52px] z-10">
-        <div className="max-w-6xl mx-auto px-4 flex gap-0">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-5 py-3 text-sm font-medium transition-colors ${activeTab === tab.id ? 'tab-active' : 'tab-inactive'}`}
-            >
-              {tab.label}
-              <span className="hidden md:inline text-xs text-vericast-muted ml-1">— {tab.desc}</span>
-            </button>
-          ))}
+      <nav className="border-b border-vericast-border/50 bg-slate-950/60 backdrop-blur-md sticky top-[73px] z-40">
+        <div className="max-w-7xl mx-auto px-6 py-2.5 flex gap-2 overflow-x-auto no-scrollbar mask-edges">
+          {TABS.map((tab) => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative px-5 py-2 text-sm font-medium transition-colors duration-300 rounded-full flex items-center gap-2.5 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="active-tab"
+                    className="absolute inset-0 bg-white/10 border border-white/10 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <Icon size={16} className={`relative z-10 transition-colors duration-300 ${isActive ? 'text-vericast-accent' : ''}`} />
+                <span className="relative z-10 tracking-wide">{tab.label}</span>
+              </button>
+            )
+          })}
         </div>
       </nav>
 
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3 space-y-4">
-          <div className={activityFlash ? 'opacity-100' : 'opacity-0 transition-opacity duration-100'}>
-            <span className="text-xs text-vericast-accent font-mono">Pipeline activity detected</span>
+      <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-8 grid grid-cols-1 xl:grid-cols-12 gap-8 overflow-hidden">
+        <motion.div 
+          className="xl:col-span-8 flex flex-col gap-6"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <div className="flex items-center justify-between h-6">
+            <h2 className="text-xs font-semibold text-vericast-accent uppercase tracking-[0.2em] flex items-center gap-2">
+              <ChevronRight size={14} className="opacity-70" />
+              {TABS.find(t => t.id === activeTab)?.desc}
+            </h2>
+            <div className={`flex items-center gap-2 transition-all duration-300 ${activityFlash ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+              <Activity size={14} className="text-vericast-accent animate-pulse" />
+              <span className="text-[10px] text-vericast-accent font-mono uppercase tracking-widest">Pipeline Active</span>
+            </div>
           </div>
 
-          {activeTab === 'game' && (
-            <section>
-              <h2 className="text-sm font-semibold text-vericast-muted uppercase tracking-wider mb-3">
-                Gaming — Verified Tick Pipeline
-              </h2>
-              <GamePanel api={API_BASE} explorer={EXPLORER_URL} onActivity={onActivity} signer={signer} />
-            </section>
-          )}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 15, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -15, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="flex-1 relative z-10"
+            >
+              {activeTab === 'game' && <GamePanel api={API_BASE} explorer={EXPLORER_URL} onActivity={onActivity} signer={signer} />}
+              {activeTab === 'social' && <SocialPanel api={API_BASE} explorer={EXPLORER_URL} onActivity={onActivity} signer={signer} />}
+              {activeTab === 'depin' && <DePINPanel api={API_BASE} explorer={EXPLORER_URL} onActivity={onActivity} />}
+            </motion.div>
+          </AnimatePresence>
+        </motion.div>
 
-          {activeTab === 'social' && (
-            <section>
-              <h2 className="text-sm font-semibold text-vericast-muted uppercase tracking-wider mb-3">
-                SocialFi — Sybil Detection
-              </h2>
-              <SocialPanel api={API_BASE} explorer={EXPLORER_URL} onActivity={onActivity} signer={signer} />
-            </section>
-          )}
-
-          {activeTab === 'depin' && (
-            <section>
-              <h2 className="text-sm font-semibold text-vericast-muted uppercase tracking-wider mb-3">
-                DePIN — Weather Sensor to Chain
-              </h2>
-              <DePINPanel api={API_BASE} explorer={EXPLORER_URL} onActivity={onActivity} />
-            </section>
-          )}
-        </div>
-
-        <aside className="space-y-4">
+        <motion.aside 
+          className="xl:col-span-4 flex flex-col gap-6"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           <VericastBadge count={teeCount} health={health} />
 
-          <div className="card space-y-2 text-xs">
-            <h4 className="text-vericast-muted uppercase tracking-wider font-semibold">Pipeline</h4>
-            <div className="font-mono text-gray-400 leading-relaxed">
-              <p>
-                <span className="text-vericast-accent">1.</span> Raw data → 0G DA blob
-              </p>
-              <p>
-                <span className="text-vericast-accent">2.</span> Deterministic validation
-              </p>
-              <p>
-                <span className="text-vericast-accent">3.</span> TEE signing (gpt-oss-120b)
-              </p>
-              <p>
-                <span className="text-vericast-accent">4.</span> KV state write
-              </p>
-              <p>
-                <span className="text-vericast-accent">5.</span> On-chain settlement
-              </p>
+          <div className="glass-panel p-6 flex flex-col gap-4 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-vericast-accent2/5 rounded-full blur-3xl -mr-10 -mt-10 transition-transform duration-700 group-hover:scale-150" />
+            
+            <h4 className="text-[10px] text-vericast-muted uppercase tracking-[0.2em] font-semibold flex items-center gap-2">
+              <Database size={12} /> Verification Pipeline
+            </h4>
+            
+            <div className="flex flex-col gap-3 font-mono text-xs text-slate-300">
+              {[
+                { step: 1, text: "Raw data → 0G DA blob" },
+                { step: 2, text: "Deterministic validation" },
+                { step: 3, text: "TEE signing (gpt-oss-120b)" },
+                { step: 4, text: "KV state write" },
+                { step: 5, text: "On-chain settlement" }
+              ].map((item, i) => (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 + (i * 0.1) }}
+                  className="flex items-start gap-3 p-2 rounded bg-white/0 hover:bg-white/5 border border-transparent hover:border-white/10 transition-colors"
+                >
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-vericast-accent/10 text-vericast-accent border border-vericast-accent/30 text-[10px] flex-shrink-0">
+                    {item.step}
+                  </span>
+                  <span className="leading-5 pt-0.5">{item.text}</span>
+                </motion.div>
+              ))}
             </div>
           </div>
 
-          <div className="card space-y-1 text-xs">
-            <h4 className="text-vericast-muted uppercase tracking-wider font-semibold">0G Components</h4>
-            <div className="font-mono space-y-0.5">
-              <a href="https://evmrpc.0g.ai" target="_blank" rel="noopener noreferrer" className="block text-vericast-accent hover:underline">
-                Chain (EVM 16661)
+          <div className="glass-panel p-6 flex flex-col gap-4 relative overflow-hidden group">
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-vericast-accent/5 rounded-full blur-3xl -mr-10 -mb-10 transition-transform duration-700 group-hover:scale-150" />
+            
+            <h4 className="text-[10px] text-vericast-muted uppercase tracking-[0.2em] font-semibold flex items-center gap-2">
+              <ShieldCheck size={12} /> 0G Infrastructure
+            </h4>
+            
+            <div className="flex flex-col gap-2 font-mono text-xs">
+              <a href="https://evmrpc-testnet.0g.ai" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-2 rounded bg-white/0 hover:bg-white/5 border border-transparent hover:border-white/10 transition-colors text-vericast-accent group/link">
+                <span>Chain (EVM 16602)</span>
+                <ChevronRight size={14} className="opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all" />
               </a>
-              <a href={EXPLORER_URL} target="_blank" rel="noopener noreferrer" className="block text-vericast-accent hover:underline">
-                Explorer
+              <a href={EXPLORER_URL} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-2 rounded bg-white/0 hover:bg-white/5 border border-transparent hover:border-white/10 transition-colors text-vericast-accent group/link">
+                <span>Block Explorer</span>
+                <ChevronRight size={14} className="opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all" />
               </a>
-              <span className="block text-vericast-muted">DA Indexer Turbo</span>
-              <span className="block text-vericast-muted">KV Node (PROBED)</span>
-              <span className="block text-vericast-muted">TEE Compute</span>
+              <div className="p-2 text-slate-400">DA Indexer Turbo <span className="float-right text-vericast-success">OK</span></div>
+              <div className="p-2 text-slate-400">KV Storage Node <span className="float-right text-vericast-warning">PROBED</span></div>
+              <div className="p-2 text-slate-400">TEE Compute Router <span className="float-right text-vericast-success">OK</span></div>
             </div>
           </div>
-        </aside>
+        </motion.aside>
       </main>
-
-      <footer className="border-t border-vericast-border py-3">
-        <div className="max-w-6xl mx-auto px-4 text-center text-xs text-vericast-muted font-mono">
-          VERICAST OMEGA — Unified Verifiable State Layer on 0G | Chain ID 16661 |{' '}
-          <a href={EXPLORER_URL} target="_blank" rel="noopener noreferrer" className="text-vericast-accent hover:underline">
-            chainscan.0g.ai
-          </a>
-        </div>
-      </footer>
     </div>
   )
 }
