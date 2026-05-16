@@ -17,7 +17,6 @@ cache/
 .env
 .env.local
 .env.production
-deployment.json
 
 # IDE
 .vscode/

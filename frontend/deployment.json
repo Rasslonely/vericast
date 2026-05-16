@@ -1,0 +1,16 @@
+{
+    "network": "0g-testnet",
+    "chainId": 16602,
+    "timestamp": "2026-05-10T18:17:13.402Z",
+    "deployer": "0x8F74E356A3bA15A0232B8d70d9c2e9A42517F871",
+    "contracts": {
+        "VERI": "0x67B2099e5B971129E85130F7dbe18929beC5E4D2",
+        "VericastArbiter": "0xF495bc8e6dDeCE3c76eDa91babe88041423d0181",
+        "VericastAgentID": "0x12C0da1f898a50A18CeC5aCB83f27c1CcB071aEA"
+    },
+    "explorer": {
+        "VERI": "https://chainscan-galileo.0g.ai/address/0x67B2099e5B971129E85130F7dbe18929beC5E4D2",
+        "VericastArbiter": "https://chainscan-galileo.0g.ai/address/0xF495bc8e6dDeCE3c76eDa91babe88041423d0181",
+        "VericastAgentID": "https://chainscan-galileo.0g.ai/address/0x12C0da1f898a50A18CeC5aCB83f27c1CcB071aEA"
+    }
+}
