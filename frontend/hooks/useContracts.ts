@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import deployment from '../../deployment.json'
+import deployment from '../deployment.json'
 
 // ABI fragments
 const ARBITER_ABI = [
