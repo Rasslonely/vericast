@@ -14,11 +14,12 @@ DEMO_AGENTS = {
     "agent_1": {"type": 0, "name": "Human Observer 1", "suspicious": False},
     "agent_2": {"type": 1, "name": "AI Weather Analyst", "suspicious": False},
     "agent_3": {"type": 1, "name": "AI Feed Monitor", "suspicious": False},
-    "bot_1": {"type": 1, "name": "Suspicious Bot Alpha", "suspicious": True},
-    "bot_2": {"type": 1, "name": "Spam Bot Beta", "suspicious": True},
-    "bot_3": {"type": 1, "name": "Sybil Bot Gamma", "suspicious": True},
+    "bot_1": {"type": 1, "name": "Suspicious Bot Alpha", "suspicious": False},
+    "bot_2": {"type": 1, "name": "Spam Bot Beta", "suspicious": False},
+    "bot_3": {"type": 1, "name": "Sybil Bot Gamma", "suspicious": False},
     "sensor_1": {"type": 2, "name": "IoT Sensor HK Central", "suspicious": False},
 }
+
 
 
 async def audit_feed(feed_id: str, tee_client, kv_client, chain_client) -> dict:

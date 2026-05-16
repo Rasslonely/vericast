@@ -69,7 +69,7 @@ class DAClient:
         """
         from zg_storage_sdk import ZgFile
 
-        raw = json.dumps(data, sort_keys=True).encode("utf-8")
+        raw = json.dumps(data, sort_keys=True, ensure_ascii=True).encode("ascii")
         file = ZgFile.from_bytes(raw)
 
         # Tier 1: Turbo indexer

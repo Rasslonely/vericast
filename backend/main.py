@@ -21,6 +21,9 @@ from chain_client import ChainClient
 from streams.depin import process_weather
 from streams.game import process_tick
 from streams.social import audit_feed
+from daemons import game_daemon, social_daemon, depin_daemon, streamer
+from fastapi.responses import StreamingResponse
+import asyncio
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
@@ -49,7 +52,16 @@ async def lifespan(app: FastAPI):
     logger.info(f"  Chain: {'✅' if chain_client.is_connected else '❌'}")
     logger.info("=== Probe Complete ===")
 
+    # Start Daemons
+    game_task = asyncio.create_task(game_daemon(da_client, tee_client, kv_client, chain_client))
+    social_task = asyncio.create_task(social_daemon(tee_client, kv_client, chain_client))
+    depin_task = asyncio.create_task(depin_daemon(da_client, tee_client, kv_client, chain_client))
+
     yield
+
+    game_task.cancel()
+    social_task.cancel()
+    depin_task.cancel()
 
     await da_client.disconnect()
     await kv_client.disconnect()
@@ -70,6 +82,10 @@ async def root():
 async def favicon():
     from fastapi.responses import Response
     return Response(status_code=204)
+
+@app.get("/stream")
+async def sse_stream():
+    return StreamingResponse(streamer.event_generator(), media_type="text/event-stream")
 
 
 

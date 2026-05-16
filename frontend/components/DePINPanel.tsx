@@ -1,17 +1,17 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CloudRain, Wind, Thermometer, Sun, MapPin, Activity, Database, CheckCircle2, ChevronRight, Globe } from 'lucide-react'
-import type { PanelProps, DePINResponse, APIError } from '@/types/api'
+import { CloudRain, Wind, Thermometer, Sun, Activity, CheckCircle2, ChevronRight, Globe, Copy } from 'lucide-react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import type { DepinState } from '@/hooks/useSSE'
 
-interface SensorLocation {
-  id: string
-  name: string
-  lat: number
-  lon: number
+interface DePINPanelProps {
+  api: string
+  explorer: string
+  onActivity?: () => void
+  depinState: DepinState | null
 }
 
 interface WeatherData {
@@ -24,79 +24,71 @@ interface WeatherData {
   source: string
 }
 
-const LOCATIONS: SensorLocation[] = [
-  { id: 'hk_central', name: 'HK Central', lat: 22.3193, lon: 114.1694 },
-  { id: 'causeway_bay', name: 'Causeway Bay', lat: 22.2783, lon: 114.1747 },
-]
-
 function WireframeGlobe() {
   const meshRef = useRef<THREE.Mesh>(null)
+  const ringRef = useRef<THREE.Mesh>(null)
   
   useFrame((state, delta) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.3
-      meshRef.current.rotation.x += delta * 0.15
+      meshRef.current.rotation.y += delta * 0.2
+    }
+    if (ringRef.current) {
+      ringRef.current.rotation.x += delta * 0.5
+      ringRef.current.rotation.y += delta * 0.3
     }
   })
 
   return (
-    <mesh ref={meshRef}>
-      <sphereGeometry args={[1.8, 24, 24]} />
-      <meshBasicMaterial color="#22d3ee" wireframe transparent opacity={0.15} />
-      {/* Inner solid sphere for depth */}
-      <mesh>
-        <sphereGeometry args={[1.75, 24, 24]} />
-        <meshBasicMaterial color="#020617" transparent opacity={0.8} />
+    <group>
+      <mesh ref={meshRef}>
+        <sphereGeometry args={[1.8, 32, 32]} />
+        <meshBasicMaterial color="#22d3ee" wireframe transparent opacity={0.1} />
+        <mesh>
+          <sphereGeometry args={[1.75, 32, 32]} />
+          <meshBasicMaterial color="#020617" transparent opacity={0.8} />
+        </mesh>
       </mesh>
-    </mesh>
+      <mesh ref={ringRef}>
+        <torusGeometry args={[2.2, 0.01, 16, 100]} />
+        <meshBasicMaterial color="#22d3ee" transparent opacity={0.4} />
+      </mesh>
+      {/* Satellite markers */}
+      {[0, 1, 2].map(i => (
+        <mesh key={i} position={[Math.cos(i * 2) * 2, Math.sin(i * 2) * 2, 0]}>
+          <sphereGeometry args={[0.05, 8, 8]} />
+          <meshBasicMaterial color="#22d3ee" />
+        </mesh>
+      ))}
+    </group>
   )
 }
 
-export default function DePINPanel({ api, explorer, onActivity }: PanelProps) {
-  const [selectedLoc, setSelectedLoc] = useState<SensorLocation | null>(null)
-  const [loading, setLoading] = useState(false)
+export default function DePINPanel({ api, explorer, onActivity, depinState }: DePINPanelProps) {
   const [weather, setWeather] = useState<WeatherData | null>(null)
-  const [result, setResult] = useState<DePINResponse | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<DepinState['result'] | null>(null)
 
-  const fetchWeather = async (loc: SensorLocation) => {
-    setSelectedLoc(loc)
-    setLoading(true)
-    setError(null)
-    setWeather(null)
-    setResult(null)
-    try {
-      const resp = await fetch(`${api}/depin/weather/${loc.lat}/${loc.lon}`)
-      const data = await resp.json()
-      if (!resp.ok) {
-        const err = data as APIError
-        setError(err.message || `HTTP ${resp.status}`)
-      } else {
-        setResult(data as DePINResponse)
-        setWeather({
-          temp: 28.5,
-          humidity: 72,
-          pressure: 1013,
-          wind_speed: 4.8,
-          uvi: 7.2,
-          timestamp: new Date().toISOString(),
-          source: 'openweathermap',
-        })
-        onActivity?.()
-      }
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Network error')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    if (depinState) {
+      setResult(depinState.result)
+      setWeather({
+        temp: 28.5,
+        humidity: 72,
+        pressure: 1013,
+        wind_speed: 4.8,
+        uvi: 7.2,
+        timestamp: new Date().toISOString(),
+        source: 'openweathermap',
+      })
+      onActivity?.()
     }
-  }
+  }, [depinState, onActivity])
 
   return (
     <div className="space-y-6">
       <div className="glass-panel p-6 relative overflow-hidden min-h-[220px] flex flex-col justify-end">
         {/* 3D Background */}
         <div className="absolute inset-0 z-0 pointer-events-none" style={{ maskImage: 'linear-gradient(to bottom, black 20%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 20%, transparent 100%)' }}>
-          <Canvas camera={{ position: [0, 0, 4] }}>
+          <Canvas camera={{ position: [0, 0, 4] }} gl={{ powerPreference: 'low-power' }}>
             <WireframeGlobe />
           </Canvas>
         </div>
@@ -109,42 +101,20 @@ export default function DePINPanel({ api, explorer, onActivity }: PanelProps) {
             <Globe size={14} className="animate-pulse" /> DePIN 3D Sensor Grid
           </h4>
           <span className="px-3 py-1 bg-cyan-500/10 rounded-full border border-cyan-500/30 text-[10px] font-mono text-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.2)]">
-            {LOCATIONS.length} ACTIVE NODES
+            HK CENTRAL NODE ACTIVE
           </span>
         </div>
 
         <div className="flex gap-3 flex-wrap relative z-10">
-          {LOCATIONS.map((loc) => {
-            const isSelected = selectedLoc?.id === loc.id
-            return (
-              <button
-                key={loc.id}
-                className={`relative px-5 py-3 rounded-xl text-xs font-mono font-medium transition-all duration-300 overflow-hidden border backdrop-blur-md ${
-                  isSelected 
-                    ? 'border-cyan-400 text-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.3)] bg-cyan-500/20' 
-                    : 'border-white/10 text-slate-300 bg-white/5 hover:bg-white/10 hover:border-cyan-500/50 hover:shadow-[0_0_15px_rgba(34,211,238,0.1)]'
-                }`}
-                onClick={() => fetchWeather(loc)}
-                disabled={loading}
-              >
-                {isSelected && (
-                  <motion.div 
-                    layoutId="sensor-glow"
-                    className="absolute inset-0 bg-cyan-400/20 blur-xl"
-                  />
-                )}
-                <span className="relative z-10 flex flex-col items-start gap-1">
-                  <span className="tracking-widest">{loc.name.toUpperCase()}</span>
-                  <span className="text-[9px] opacity-70 text-cyan-200">[{loc.lat.toFixed(4)}, {loc.lon.toFixed(4)}]</span>
-                </span>
-              </button>
-            )
-          })}
+          <div className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs tracking-wider border bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-[0_0_20px_rgba(0,0,0,0.5)] glow-text cursor-default">
+            <Activity size={16} className="animate-pulse text-cyan-400" />
+            ORACLE ACTIVE — Ingesting every 30s
+          </div>
         </div>
       </div>
 
       <AnimatePresence mode="wait">
-        {loading && (
+        {!result && (
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
             className="glass-panel p-8 flex flex-col items-center justify-center gap-4 text-center min-h-[180px] border-cyan-500/30 shadow-[0_0_30px_rgba(34,211,238,0.1)]"
@@ -163,16 +133,7 @@ export default function DePINPanel({ api, explorer, onActivity }: PanelProps) {
           </motion.div>
         )}
 
-        {error && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="glass-panel p-4 border-rose-500/30 text-rose-400 text-xs font-mono bg-rose-500/10 shadow-[0_0_20px_rgba(244,63,94,0.1)]"
-          >
-            {error}
-          </motion.div>
-        )}
-
-        {!loading && weather && result && (
+        {weather && result && (
           <motion.div 
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             className="space-y-6"
@@ -209,15 +170,21 @@ export default function DePINPanel({ api, explorer, onActivity }: PanelProps) {
 
                 <div className="space-y-4 font-mono text-xs relative z-10">
                   <div className="flex flex-col gap-1.5 p-3 bg-black/40 rounded-lg border border-white/5 hover:border-cyan-500/30 transition-colors">
-                    <span className="text-[9px] text-cyan-500 uppercase tracking-widest font-semibold flex items-center gap-1">
-                      DA Root Hash <ChevronRight size={10} className="opacity-50" />
+                    <span className="text-[9px] text-cyan-500 uppercase tracking-widest font-semibold flex items-center justify-between">
+                      <span>DA Root Hash <ChevronRight size={10} className="inline opacity-50" /></span>
+                      <button onClick={() => navigator.clipboard.writeText(result.da_root)} className="text-cyan-500 hover:text-cyan-300 transition-colors" title="Copy DA Root">
+                        <Copy size={12} />
+                      </button>
                     </span>
                     <span className="text-cyan-300 truncate">{result.da_root}</span>
                   </div>
                   
                   <div className="flex flex-col gap-1.5 p-3 bg-black/40 rounded-lg border border-white/5 hover:border-emerald-500/30 transition-colors">
-                    <span className="text-[9px] text-emerald-500 uppercase tracking-widest font-semibold flex items-center gap-1">
-                      TEE Cryptographic Seal
+                    <span className="text-[9px] text-emerald-500 uppercase tracking-widest font-semibold flex items-center justify-between">
+                      <span>TEE Cryptographic Seal</span>
+                      <button onClick={() => navigator.clipboard.writeText(result.tee_seal || 'mock_seal')} className="text-emerald-500 hover:text-emerald-300 transition-colors" title="Copy TEE Seal">
+                        <Copy size={12} />
+                      </button>
                     </span>
                     <span className={`truncate ${result.tee_seal && result.tee_seal !== 'mock_seal' ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]' : 'text-orange-400'}`}>
                       {result.tee_seal || 'mock_seal'}
@@ -256,3 +223,4 @@ function MetricBadge({ icon: Icon, label, value }: { icon: any, label: string; v
     </div>
   )
 }
+

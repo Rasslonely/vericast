@@ -4,42 +4,9 @@ import { useEffect, useState, useRef } from 'react'
 import { motion, useMotionTemplate, useMotionValue, useSpring, AnimatePresence } from 'framer-motion'
 import { ShieldCheck, ExternalLink, Activity, Database, Fingerprint } from 'lucide-react'
 import type { HealthResponse, DeploymentJSON, VericastBadgeProps } from '@/types/api'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { Float, MeshDistortMaterial, Environment } from '@react-three/drei'
-import * as THREE from 'three'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 const EXPLORER_URL = process.env.NEXT_PUBLIC_EXPLORER_URL || 'https://chainscan.0g.ai'
-
-function FloatingCrystal({ isHealthy }: { isHealthy: boolean }) {
-  const meshRef = useRef<THREE.Mesh>(null)
-  
-  useFrame((state, delta) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.5
-      meshRef.current.rotation.z += delta * 0.2
-    }
-  })
-
-  return (
-    <Float speed={2} rotationIntensity={1.5} floatIntensity={2}>
-      <mesh ref={meshRef} scale={1.2}>
-        <octahedronGeometry args={[1, 0]} />
-        <MeshDistortMaterial 
-          color={isHealthy ? "#22d3ee" : "#f59e0b"} 
-          envMapIntensity={2} 
-          clearcoat={1} 
-          clearcoatRoughness={0.1} 
-          metalness={0.9} 
-          roughness={0.1}
-          distort={isHealthy ? 0.1 : 0.4}
-          speed={isHealthy ? 2 : 6}
-          wireframe={!isHealthy}
-        />
-      </mesh>
-    </Float>
-  )
-}
 
 export default function VericastBadge({ count, health }: VericastBadgeProps) {
   const [deployment, setDeployment] = useState<DeploymentJSON | null>(null)
@@ -131,21 +98,13 @@ export default function VericastBadge({ count, health }: VericastBadgeProps) {
         {/* Scanlines overlay */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjEiIGZpbGw9InJnYmEoMjU1LDkyNTUsMjU1LDAuMDIpIi8+PC9zdmc+')] opacity-50" />
 
-        {/* 3D Canvas Background */}
-        <div className="absolute inset-0 z-0 opacity-40 pointer-events-none group-hover:opacity-80 transition-opacity duration-700">
-          <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
-            <ambientLight intensity={0.5} />
-            <directionalLight position={[10, 10, 10]} intensity={1} />
-            <Environment preset="city" />
-            <FloatingCrystal isHealthy={isHealthy} />
-          </Canvas>
-        </div>
-
         <div className="relative h-full p-8 flex flex-col justify-between z-10" style={{ transform: "translateZ(40px)" }}>
           
           <div className="flex justify-between items-start">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className={isHealthy ? 'text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]' : 'text-orange-400'} size={24} />
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded-md overflow-hidden shadow-[0_0_10px_rgba(34,211,238,0.3)]">
+                <img src="/vericast_icon.jpeg" alt="Vericast Logo" className="w-full h-full object-cover" />
+              </div>
               <h3 className="text-sm font-bold text-white uppercase tracking-[0.2em] drop-shadow-md">Vericast Badge</h3>
             </div>
             <div className={`flex items-center gap-2 px-4 py-1.5 bg-black/60 backdrop-blur-md rounded-full border transition-colors ${isHealthy ? 'border-cyan-500/30 shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'border-orange-500/30'}`}>
@@ -206,3 +165,4 @@ export default function VericastBadge({ count, health }: VericastBadgeProps) {
     </motion.div>
   )
 }
+
